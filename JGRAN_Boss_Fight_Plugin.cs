@@ -187,6 +187,7 @@ namespace JGRAN_Boss_Fight_Plugin
                 {
                     TSPlayer.All.SendErrorMessage("Boss out of range");
                     args.Npc.target = -1;
+                    args.Npc.TargetClosestUpgraded(true, region.Area.Center.ToWorldCoordinates());
                     //args.Npc.Teleport(region.Area.Center.ToWorldCoordinates());
                     //args.Npc.DirectionTo(region.Area.Center.ToWorldCoordinates());
                 }
