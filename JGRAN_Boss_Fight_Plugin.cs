@@ -71,7 +71,7 @@ namespace JGRAN_Boss_Fight_Plugin
             if (args.Npc.boss && bosspos != null)
             {
                 //Console.WriteLine($"boss position: [{args.Npc.position.X},{args.Npc.position.Y}] region position: [{bosspos[X]},{bosspos[Y]}]");
-                if(args.Npc.position.X < bosspos[X] - radius && args.Npc.position.X > bosspos[X] + radius)
+                if((1-radius)* (1 - radius) <= (args.Npc.position.X - bosspos[X])*(args.Npc.position.X - bosspos[X]))
                 {
                     Console.WriteLine("Boss out of range");
                     args.Npc.DirectionTo(new Microsoft.Xna.Framework.Vector2(bosspos[X],bosspos[Y]));
