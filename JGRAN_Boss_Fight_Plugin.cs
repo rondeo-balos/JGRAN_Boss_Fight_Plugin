@@ -78,7 +78,7 @@ namespace JGRAN_Boss_Fight_Plugin
                     if (getArena() != "0")
                     {
                         TShockAPI.DB.Region _region = TShock.Regions.GetRegionByName(getArena());
-                        _removeArena(_region.Area.Location.X, _region.Area.Location.Y, _region.Area.Width, _region.Area.Height, () => {
+                        removeLastArena().ContinueWith( (d) => {
                             removeArena();
                             args.Player.SendSuccessMessage("Arena has been removed successfully");
                         });
@@ -94,14 +94,18 @@ namespace JGRAN_Boss_Fight_Plugin
                         {
                             if(getArena() != "0")
                             {
-                                _removeArena(region_.Area.Location.X, region_.Area.Location.Y, region_.Area.Width, region_.Area.Height, () => {
+                                removeLastArena().ContinueWith( (d1) => {
                                     removeArena();
+                                    generateArena(region_.Area.Location.X, region_.Area.Location.Y, region_.Area.Width, region_.Area.Height).ContinueWith((d2) => {
+                                        saveArena(region_.Name);
+                                        args.Player.SendSuccessMessage("Arena has been set successfully");
+                                    });
                                 });
-                            }
-                            _generateArena(region_.Area.Location.X, region_.Area.Location.Y, region_.Area.Width, region_.Area.Height, () => {
-                                saveArena(region_.Name);
-                                args.Player.SendSuccessMessage("Arena has been set successfully");
-                            });
+                            }else
+                                generateArena(region_.Area.Location.X, region_.Area.Location.Y, region_.Area.Width, region_.Area.Height).ContinueWith( (d) => {
+                                    saveArena(region_.Name);
+                                    args.Player.SendSuccessMessage("Arena has been set successfully");
+                                });
                         }
                         else
                             args.Player.SendWarningMessage("This is not your region man!");
@@ -133,9 +137,10 @@ namespace JGRAN_Boss_Fight_Plugin
                         args.Player.SendWarningMessage("Your not in a Region");
                     break;
                 case "help":
-                    args.Player.SendInfoMessage("Before using this command, make sure to use the House Region plugin and you must have a valid Region.\n\n" + 
-                        "/setarena <regionname> - setting the arena region for bossfight\n" +
+                    args.Player.SendInfoMessage("Before using this command, make sure to use the House Region plugin and you must have a valid Region.\n\n" +
+                        "/setarena regionname - setting the arena region for bossfight\n" +
                         "/setarena check - checks if the region has been set\n" +
+                        "/setarena remove - removes arena platforms if it has been set\n" +
                         "/setarena help - show help information");
                     break;
                 default:
@@ -146,14 +151,18 @@ namespace JGRAN_Boss_Fight_Plugin
                         {
                             if (getArena() != "0")
                             {
-                                _removeArena(region.Area.Location.X, region.Area.Location.Y, region.Area.Width, region.Area.Height, () => {
+                                removeLastArena().ContinueWith( (d1) => {
                                     removeArena();
+                                    generateArena(region.Area.Location.X, region.Area.Location.Y, region.Area.Width, region.Area.Height).ContinueWith((d2) => {
+                                        saveArena(token);
+                                        args.Player.SendSuccessMessage("Arena has been set successfully");
+                                    });
                                 });
-                            }
-                            _generateArena(region.Area.Location.X, region.Area.Location.Y, region.Area.Width, region.Area.Height, ()=> {
-                                saveArena(token);
-                                args.Player.SendSuccessMessage("Arena has been set successfully");
-                            });
+                            }else
+                                generateArena(region.Area.Location.X, region.Area.Location.Y, region.Area.Width, region.Area.Height).ContinueWith((d)=> {
+                                    saveArena(token);
+                                    args.Player.SendSuccessMessage("Arena has been set successfully");
+                                });
                         }
                         else
                             args.Player.SendWarningMessage($"Region [{token}] is not yours");
@@ -183,61 +192,61 @@ namespace JGRAN_Boss_Fight_Plugin
                 }
             }
         }
-
-        void _generateArena(int x, int y, int w, int h, Action callback)
+        
+        Task generateArena(int x, int y, int w, int h)
         {
-            for (int i = x; i <= x + w; i++)
-            {
-                for (int j = y; j <= y + h; j++)
-                {
-                    if(i % 4 == 0)
-                    {
-                        Main.tile[i, j] = new Tile();
-                        //Main.tile[i, j].wall = 0;
-                        Main.tile[i, j].wall = 1;
-
-                        TSPlayer.All.SendTileSquare(i, j);
-                    }
-                }  
-            }
-            for (int j = y; j <= y + h; j++)
-            {
+            return Task.Run(() => {
                 for (int i = x; i <= x + w; i++)
                 {
-                    // 19 = platform
-                    if (j % 4 == 0)
+                    for (int j = y; j <= y + h; j++)
                     {
-                        Main.tile[i, j].active(true);
-                        Main.tile[i, j].frameX = -1;
-                        Main.tile[i, j].frameY = -1;
-                        Main.tile[i, j].lava(false);
-                        Main.tile[i, j].liquid = 0;
-                        Main.tile[i, j].type = 19;
+                        if (i % 4 == 0)
+                        {
+                            Main.tile[i, j] = new Tile();
+                            //Main.tile[i, j].wall = 0;
+                            Main.tile[i, j].wall = 1;
+
+                            TSPlayer.All.SendTileSquare(i, j);
+                        }
+                    }
+                }
+                for (int j = y; j <= y + h; j++)
+                {
+                    for (int i = x; i <= x + w; i++)
+                    {
+                        // 19 = platform
+                        if (j % 4 == 0)
+                        {
+                            Main.tile[i, j].active(true);
+                            Main.tile[i, j].frameX = -1;
+                            Main.tile[i, j].frameY = -1;
+                            Main.tile[i, j].lava(false);
+                            Main.tile[i, j].liquid = 0;
+                            Main.tile[i, j].type = 19;
+
+                            TSPlayer.All.SendTileSquare(i, j);
+                        }
+                    }
+                }
+            });
+        }
+
+        Task removeLastArena()
+        {
+            
+            return Task.Run(()=>{
+                TShockAPI.DB.Region region = TShock.Regions.GetRegionByName(getArena());
+                int x = region.Area.Location.X, y = region.Area.Location.Y, w = region.Area.Width, h = region.Area.Height;
+                for (int i = x; i <= x + w; i++)
+                {
+                    for (int j = y; j <= y + h; j++)
+                    {
+                        Main.tile[i, j] = new Tile();
 
                         TSPlayer.All.SendTileSquare(i, j);
                     }
                 }
-            }
-            callback();
-        }
-
-        void _removeArena(int x, int y, int w, int h, Action callback)
-        {
-            for (int i = x; i <= x + w; i++)
-            {
-                for (int j = y; j <= y + h; j++)
-                {
-                    Main.tile[i, j] = new Tile();
-
-                    TSPlayer.All.SendTileSquare(i, j);
-                }
-            }
-            callback();
-        }
-
-        void finishGen()
-        {
-            TShock.Players.ForEach((plr) => { plr.SendTileSquare(0,0, 50000); });
+            });
         }
     }
 }
