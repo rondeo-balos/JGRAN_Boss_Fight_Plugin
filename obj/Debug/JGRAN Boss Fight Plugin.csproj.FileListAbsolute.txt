@@ -22,3 +22,4 @@ E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\obj\Debug\JGRAN Boss Fight Pl
 E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\obj\Debug\JGRAN Boss Fight Plugin.csproj.CopyComplete
 E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\obj\Debug\JGRAN Boss Fight Plugin.dll
 E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\obj\Debug\JGRAN Boss Fight Plugin.pdb
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Debug\JGRAN Boss Fight Plugin.dll.config

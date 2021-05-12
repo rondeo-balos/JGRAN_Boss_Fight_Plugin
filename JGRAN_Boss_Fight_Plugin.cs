@@ -41,11 +41,27 @@ namespace JGRAN_Boss_Fight_Plugin
                 HelpText = "Before using this command, make sure to use the House Region plugin and you must have a valid Region.\n\n"+
                 "/setarena regionname - setting the arena region for bossfight\n" +
                 "/setarena check - checks if the region has been set\n"+
+                "/setarena remove - removes arena platforms if it has been set\n"+
                 "/setarena help - show help information"
             });
         }
 
-        string arena = null;
+        string getArena()
+        {
+            return (string)Properties.Settings.Default["Arena"];
+        }
+
+        void saveArena(string arena)
+        {
+            Properties.Settings.Default["Arena"] = arena;
+            Properties.Settings.Default.Save();
+        }
+
+        void removeArena()
+        {
+            Properties.Settings.Default["Arena"] = "0";
+            Properties.Settings.Default.Save();
+        }
 
         void setArena(CommandArgs args)
         {
@@ -58,15 +74,32 @@ namespace JGRAN_Boss_Fight_Plugin
             var token = args.Parameters[0];
             switch (token)
             {
+                case "remove":
+                    if (getArena() != "0")
+                    {
+                        TShockAPI.DB.Region _region = TShock.Regions.GetRegionByName(getArena());
+                        _removeArena(_region.Area.Location.X, _region.Area.Location.Y, _region.Area.Width, _region.Area.Height, () => {
+                            removeArena();
+                            args.Player.SendSuccessMessage("Arena has been removed successfully");
+                        });
+                    }
+                    else
+                        args.Player.SendWarningMessage("Arena is not yet set");
+                    break;
                 case "this":
                     TShockAPI.DB.Region region_ = args.Player.CurrentRegion;
                     if (region_ != null)
                     {
                         if (region_.Owner == args.Player.Name)
                         {
-                            generateArena(region_.Area.Location.X, region_.Area.Location.Y, region_.Area.Width, region_.Area.Height).ContinueWith((d) => {
-                                TShock.Utils.SaveWorld();
-                                arena = region_.Name;
+                            if(getArena() != "0")
+                            {
+                                _removeArena(region_.Area.Location.X, region_.Area.Location.Y, region_.Area.Width, region_.Area.Height, () => {
+                                    removeArena();
+                                });
+                            }
+                            _generateArena(region_.Area.Location.X, region_.Area.Location.Y, region_.Area.Width, region_.Area.Height, () => {
+                                saveArena(region_.Name);
                                 args.Player.SendSuccessMessage("Arena has been set successfully");
                             });
                         }
@@ -77,7 +110,7 @@ namespace JGRAN_Boss_Fight_Plugin
                         args.Player.SendErrorMessage("You are not currently standing in a region.");
                     break;
                 case "check":
-                    if (arena == null)
+                    if (getArena() == "0")
                     {
                         args.Player.SendWarningMessage("arena not set");
                         if (args.Player.CurrentRegion != null)
@@ -91,7 +124,7 @@ namespace JGRAN_Boss_Fight_Plugin
                     if (args.Player.CurrentRegion != null)
                     {
                         args.Player.SendInfoMessage($"Region: {args.Player.CurrentRegion.Name}");
-                        if (args.Player.CurrentRegion.Name == arena)
+                        if (args.Player.CurrentRegion.Name == getArena())
                             args.Player.SendInfoMessage("You're inside the arena");
                         else
                             args.Player.SendWarningMessage("You're outside the arena");
@@ -111,9 +144,14 @@ namespace JGRAN_Boss_Fight_Plugin
                     {
                         if (region.Owner == args.Player.Name)
                         {
-                            generateArena(region.Area.Location.X, region.Area.Location.Y, region.Area.Width, region.Area.Height).ContinueWith((d) => {
-                                TShock.Utils.SaveWorld();
-                                arena = token;
+                            if (getArena() != "0")
+                            {
+                                _removeArena(region.Area.Location.X, region.Area.Location.Y, region.Area.Width, region.Area.Height, () => {
+                                    removeArena();
+                                });
+                            }
+                            _generateArena(region.Area.Location.X, region.Area.Location.Y, region.Area.Width, region.Area.Height, ()=> {
+                                saveArena(token);
                                 args.Player.SendSuccessMessage("Arena has been set successfully");
                             });
                         }
@@ -128,13 +166,13 @@ namespace JGRAN_Boss_Fight_Plugin
 
         void onNPCAIUpdate(NpcAiUpdateEventArgs args)
         {
-            if (args.Npc.boss && arena != null)
+            if (args.Npc.boss && getArena() != "0")
             {
                 Point point = new Point();
                 point.X = (int) args.Npc.position.ToTileCoordinates().X;
                 point.Y = (int) args.Npc.position.ToTileCoordinates().Y;
 
-                TShockAPI.DB.Region region = TShock.Regions.GetRegionByName(arena);
+                TShockAPI.DB.Region region = TShock.Regions.GetRegionByName(getArena());
 
                 if (!region.Area.Contains(point))
                 {
@@ -153,7 +191,7 @@ namespace JGRAN_Boss_Fight_Plugin
                     for (int j=y; j<=y+h; j++)
                     {
                         Main.tile[i, j] = new Tile();
-                        Main.tile[i, j].wall = 0;
+                        //Main.tile[i, j].wall = 0;
                         Main.tile[i, j].wall = 1;
                     }
                 }
@@ -161,12 +199,65 @@ namespace JGRAN_Boss_Fight_Plugin
                 {
                     for (int i = x; i <= x + w; i++)
                     {
-                        if (j % 2 == 0)
-                            Main.tile[i, j].type = 94;
-                            //Main.tile[i, j] = 94;
+                        // 19 or 94
+                        if (j % 4 == 0) {
+                            Main.tile[i, j].active(true);
+                            Main.tile[i, j].frameX = -1;
+                            Main.tile[i, j].frameY = -1;
+                            Main.tile[i, j].lava(false);
+                            Main.tile[i, j].liquid = 0;
+                            Main.tile[i, j].type = 19;
+                            //Main.tile[i, j].frameNumber(94);
+                        }
                     }
                 }
             });
+        }
+
+        void _generateArena(int x, int y, int w, int h, Action callback)
+        {
+            for (int i = x; i <= x + w; i++)
+            {
+                for (int j = y; j <= y + h; j++)
+                {
+                    if(i % 4 == 0)
+                    {
+                        Main.tile[i, j] = new Tile();
+                        //Main.tile[i, j].wall = 0;
+                        Main.tile[i, j].wall = 1;
+                    }
+                }  
+            }
+            for (int j = y; j <= y + h; j++)
+            {
+                for (int i = x; i <= x + w; i++)
+                {
+                    // 19 or 94
+                    if (j % 4 == 0)
+                    {
+                        Main.tile[i, j].active(true);
+                        Main.tile[i, j].frameX = -1;
+                        Main.tile[i, j].frameY = -1;
+                        Main.tile[i, j].lava(false);
+                        Main.tile[i, j].liquid = 0;
+                        Main.tile[i, j].type = 19;
+                        //Main.tile[i, j].frameNumber(94);
+                    }
+                }
+            }
+            callback();
+        }
+
+        void _removeArena(int x, int y, int w, int h, Action callback)
+        {
+            for (int i = x; i <= x + w; i++)
+            {
+                for (int j = y; j <= y + h; j++)
+                {
+                    Main.tile[i, j] = new Tile();
+                }
+            }
+            callback();
         }
     }
 }
