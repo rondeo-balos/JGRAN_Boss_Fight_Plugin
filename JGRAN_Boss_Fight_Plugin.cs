@@ -3,6 +3,8 @@ using System.Reflection;
 using Terraria;
 using TerrariaApi.Server;
 using TShockAPI;
+using Microsoft.Xna.Framework;
+using System.Threading.Tasks;
 
 namespace JGRAN_Boss_Fight_Plugin
 {
@@ -43,8 +45,7 @@ namespace JGRAN_Boss_Fight_Plugin
             });
         }
 
-        int[] arena = null;
-        const int X = 0, Y = 1, W = 2, H = 3;
+        string arena = null;
 
         void setArena(CommandArgs args)
         {
@@ -57,33 +58,70 @@ namespace JGRAN_Boss_Fight_Plugin
             var token = args.Parameters[0];
             switch (token)
             {
+                case "this":
+                    TShockAPI.DB.Region region_ = args.Player.CurrentRegion;
+                    if (region_ != null)
+                    {
+                        if (region_.Owner == args.Player.Name)
+                        {
+                            generateArena(region_.Area.Location.X, region_.Area.Location.Y, region_.Area.Width, region_.Area.Height).ContinueWith((d) => {
+                                TShock.Utils.SaveWorld();
+                                arena = region_.Name;
+                                args.Player.SendSuccessMessage("Arena has been set successfully");
+                            });
+                        }
+                        else
+                            args.Player.SendWarningMessage("This is not your region man!");
+                    }
+                    else
+                        args.Player.SendErrorMessage("You are not currently standing in a region.");
+                    break;
                 case "check":
                     if (arena == null)
                     {
                         args.Player.SendWarningMessage("arena not set");
+                        if (args.Player.CurrentRegion != null)
+                        {
+                            if(args.Player.CurrentRegion.Owner == args.Player.Name)
+                                args.Player.SendInfoMessage($"but you are currently standing in [{args.Player.CurrentRegion.Name}] region. If you want to set this region just type /setarena this");
+                        }
                         break;
                     }
-                    args.Player.SendSuccessMessage($"arena: {arena}");
-                    if (!checkRectanglePoint(args.Player.LastNetPosition.X, args.Player.LastNetPosition.Y, arena[X], arena[Y], arena[W], arena[H]))
-                        args.Player.SendWarningMessage("Out of range");
-                    else
-                        args.Player.SendSuccessMessage("Good");
+                    
+                    if (args.Player.CurrentRegion != null)
+                    {
+                        args.Player.SendInfoMessage($"Region: {args.Player.CurrentRegion.Name}");
+                        if (args.Player.CurrentRegion.Name == arena)
+                            args.Player.SendInfoMessage("You're inside the arena");
+                        else
+                            args.Player.SendWarningMessage("You're outside the arena");
+                        
+                    }else
+                        args.Player.SendWarningMessage("Your not in a Region");
                     break;
                 case "help":
-                    args.Player.SendInfoMessage("/setarena <regionname> - setting the arena region for bossfight\n" +
+                    args.Player.SendInfoMessage("Before using this command, make sure to use the House Region plugin and you must have a valid Region.\n\n" + 
+                        "/setarena <regionname> - setting the arena region for bossfight\n" +
                         "/setarena check - checks if the region has been set\n" +
                         "/setarena help - show help information");
                     break;
                 default:
-                    try
+                    TShockAPI.DB.Region region = TShock.Regions.GetRegionByName(token);
+                    if (region != null)
                     {
-                        arena = getPlayerRegion(token, args.Player.Name);
-                        args.Player.SendSuccessMessage("Arena has been set successfully");
-                    }catch(Exception err)
-                    {
-                        args.Player.SendErrorMessage("Please make sure you have a region before using this command");
-                        args.Player.SendWarningMessage(err.Message);
+                        if (region.Owner == args.Player.Name)
+                        {
+                            generateArena(region.Area.Location.X, region.Area.Location.Y, region.Area.Width, region.Area.Height).ContinueWith((d) => {
+                                TShock.Utils.SaveWorld();
+                                arena = token;
+                                args.Player.SendSuccessMessage("Arena has been set successfully");
+                            });
+                        }
+                        else
+                            args.Player.SendWarningMessage($"Region [{token}] is not yours");
                     }
+                    else
+                        args.Player.SendErrorMessage($"Region [{token}] not found, please create a region using /house def");
                     break;
             }
         }
@@ -92,37 +130,34 @@ namespace JGRAN_Boss_Fight_Plugin
         {
             if (args.Npc.boss && arena != null)
             {
-                if (!checkRectanglePoint(args.Npc.position.X, args.Npc.position.Y, arena[X], arena[Y], arena[W], arena[H]))
+                Point point = new Point();
+                point.X = (int) args.Npc.position.ToTileCoordinates().X;
+                point.Y = (int) args.Npc.position.ToTileCoordinates().Y;
+
+                TShockAPI.DB.Region region = TShock.Regions.GetRegionByName(arena);
+
+                if (!region.Area.Contains(point))
                 {
-                    Console.WriteLine("boss out of range");
-                    /*int centerX = arena[X] + (arena[W] / 2);
-                    int centerY = arena[Y] + (arena[H] / 2);
-                    args.Npc.Teleport(new Microsoft.Xna.Framework.Vector2(centerX,centerY));*/
+                    TSPlayer.All.SendErrorMessage("Boss out of range");
+                    args.Npc.Teleport(region.Area.Center.ToWorldCoordinates());
+                    //args.Npc.DirectionTo(region.Area.Center.ToWorldCoordinates());
                 }
             }
         }
 
-        int[] getPlayerRegion(string region, string owner)
+        Task generateArena(int x, int y, int w, int h)
         {
-            TShock.DB.Open();
-            System.Data.IDbCommand cmd = TShock.DB.CreateCommand();
-            string cmdText = "SELECT X1, Y1, width, height FROM Regions WHERE RegionName = '" + region + "' AND Owner = '" + owner + "' AND WorldID = '" + Main.worldID + "'";
-            cmd.CommandText = cmdText;
-            System.Data.IDataReader reader = cmd.ExecuteReader();
-            reader.Read();
-            int[] retval = { reader.GetInt32(X), reader.GetInt32(Y), reader.GetInt32(W), reader.GetInt32(H) };
-            reader.Dispose();
-            cmd.Dispose();
-            TShock.DB.Close();
-            return retval;
-        }
+            return Task.Run(()=> {
+                for (int i = x; i <= x + w; i++)
+                {
+                    for (int j = y; j <= y + h; j++)
+                    {
 
-        bool checkRectanglePoint(float px, float py, int rx, int ry, int rw, int rh)
-        {
-            return px >= rx && // left boundary
-                 px <= rx + rw && // right boundary
-                 py >= ry && // upper boundary
-                 py <= ry + rh; // lower boundary
+                        //if(!WorldGen.ReplaceWall(i, j, Main.tile[i, j].type))
+                        WorldGen.PlaceWall(i, j, 1);
+                    }
+                }
+            });
         }
     }
 }
