@@ -63,6 +63,17 @@ namespace JGRAN_Boss_Fight_Plugin
                         args.Player.SendSuccessMessage($"Boss Fight radius has been set to {radius}!");
                     }
                     break;
+                case "check":
+                    if (bosspos != null)
+                    {
+                        if ((1 - radius) * (1 - radius) <= (args.Player.LastNetPosition.X - bosspos[X]) * (args.Player.LastNetPosition.X - bosspos[X]))
+                            args.Player.SendSuccessMessage("Your safe in this place!");
+                        else
+                            args.Player.SendErrorMessage("Fight for your death!");
+                    }
+                    else
+                        args.Player.SendErrorMessage("Bossfight Region has not been set!");
+                        break;
             }
         }
 
@@ -74,7 +85,9 @@ namespace JGRAN_Boss_Fight_Plugin
                 if((1-radius)* (1 - radius) <= (args.Npc.position.X - bosspos[X])*(args.Npc.position.X - bosspos[X]))
                 {
                     Console.WriteLine("Boss out of range");
-                    args.Npc.DirectionTo(new Microsoft.Xna.Framework.Vector2(bosspos[X],bosspos[Y]));
+                    args.Npc.Teleport(new Microsoft.Xna.Framework.Vector2(bosspos[X], bosspos[Y]));
+                    //args.Npc.DirectionTo(new Microsoft.Xna.Framework.Vector2(bosspos[X],bosspos[Y]));
+                    //args.Npc.AIDirect();
                 }
             }
         }
