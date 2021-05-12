@@ -34,62 +34,95 @@ namespace JGRAN_Boss_Fight_Plugin
 
         void onInit(EventArgs args)
         {
-            Commands.ChatCommands.Add(new Command("tshock.admin.bossfight", bossFightCommand, "bossfight")
+            Commands.ChatCommands.Add(new Command("bossfight.setarena", setArena, "setarena")
             {
-                HelpText = "JGRAN Reward Plugin"
+                HelpText = "Before using this command, make sure to use the House Region plugin and you must have a valid Region.\n\n"+
+                "/setarena regionname - setting the arena region for bossfight\n" +
+                "/setarena check - checks if the region has been set\n"+
+                "/setarena help - show help information"
             });
         }
 
-        float[] bosspos = null;
-        int radius = 40000;
+        int[] arena = null;
+        const int X = 0, Y = 1, W = 2, H = 3;
 
-        const int X = 0;
-        const int Y = 1;
-
-        void bossFightCommand(CommandArgs args)
+        void setArena(CommandArgs args)
         {
+
+            if(args.Parameters.Count <= 0)
+            {
+                args.Player.SendWarningMessage("type '/setarena help' - for more info");
+                return;
+            }
             var token = args.Parameters[0];
             switch (token)
             {
-                case "position":
-                    // bossfight position
-                    bosspos = new float[] { args.Player.LastNetPosition.X, args.Player.LastNetPosition.Y };
-                    args.Player.SendSuccessMessage($"Boss Fight position has been set to [{bosspos[0]},{bosspos[1]}]!");
-                    break;
-                case "radius":
-                    //bossfight radius 50000
-                    if (Int32.TryParse(args.Parameters[1], out radius))
-                    {
-                        args.Player.SendSuccessMessage($"Boss Fight radius has been set to {radius}!");
-                    }
-                    break;
                 case "check":
-                    if (bosspos != null)
+                    if (arena == null)
                     {
-                        if ((1 - radius) * (1 - radius) <= (args.Player.LastNetPosition.X - bosspos[X]) * (args.Player.LastNetPosition.X - bosspos[X]))
-                            args.Player.SendSuccessMessage("Your safe in this place!");
-                        else
-                            args.Player.SendErrorMessage("Fight for your death!");
-                    }
-                    else
-                        args.Player.SendErrorMessage("Bossfight Region has not been set!");
+                        args.Player.SendWarningMessage("arena not set");
                         break;
+                    }
+                    args.Player.SendSuccessMessage($"arena: {arena}");
+                    if (!checkRectanglePoint(args.Player.LastNetPosition.X, args.Player.LastNetPosition.Y, arena[X], arena[Y], arena[W], arena[H]))
+                        args.Player.SendWarningMessage("Out of range");
+                    else
+                        args.Player.SendSuccessMessage("Good");
+                    break;
+                case "help":
+                    args.Player.SendInfoMessage("/setarena <regionname> - setting the arena region for bossfight\n" +
+                        "/setarena check - checks if the region has been set\n" +
+                        "/setarena help - show help information");
+                    break;
+                default:
+                    try
+                    {
+                        arena = getPlayerRegion(token, args.Player.Name);
+                        args.Player.SendSuccessMessage("Arena has been set successfully");
+                    }catch(Exception err)
+                    {
+                        args.Player.SendErrorMessage("Please make sure you have a region before using this command");
+                        args.Player.SendWarningMessage(err.Message);
+                    }
+                    break;
             }
         }
 
         void onNPCAIUpdate(NpcAiUpdateEventArgs args)
         {
-            if (args.Npc.boss && bosspos != null)
+            if (args.Npc.boss && arena != null)
             {
-                //Console.WriteLine($"boss position: [{args.Npc.position.X},{args.Npc.position.Y}] region position: [{bosspos[X]},{bosspos[Y]}]");
-                if((1-radius)* (1 - radius) <= (args.Npc.position.X - bosspos[X])*(args.Npc.position.X - bosspos[X]))
+                if (!checkRectanglePoint(args.Npc.position.X, args.Npc.position.Y, arena[X], arena[Y], arena[W], arena[H]))
                 {
-                    Console.WriteLine("Boss out of range");
-                    args.Npc.Teleport(new Microsoft.Xna.Framework.Vector2(bosspos[X], bosspos[Y]));
-                    //args.Npc.DirectionTo(new Microsoft.Xna.Framework.Vector2(bosspos[X],bosspos[Y]));
-                    //args.Npc.AIDirect();
+                    Console.WriteLine("boss out of range");
+                    /*int centerX = arena[X] + (arena[W] / 2);
+                    int centerY = arena[Y] + (arena[H] / 2);
+                    args.Npc.Teleport(new Microsoft.Xna.Framework.Vector2(centerX,centerY));*/
                 }
             }
+        }
+
+        int[] getPlayerRegion(string region, string owner)
+        {
+            TShock.DB.Open();
+            System.Data.IDbCommand cmd = TShock.DB.CreateCommand();
+            string cmdText = "SELECT X1, Y1, width, height FROM Regions WHERE RegionName = '" + region + "' AND Owner = '" + owner + "' AND WorldID = '" + Main.worldID + "'";
+            cmd.CommandText = cmdText;
+            System.Data.IDataReader reader = cmd.ExecuteReader();
+            reader.Read();
+            int[] retval = { reader.GetInt32(X), reader.GetInt32(Y), reader.GetInt32(W), reader.GetInt32(H) };
+            reader.Dispose();
+            cmd.Dispose();
+            TShock.DB.Close();
+            return retval;
+        }
+
+        bool checkRectanglePoint(float px, float py, int rx, int ry, int rw, int rh)
+        {
+            return px >= rx && // left boundary
+                 px <= rx + rw && // right boundary
+                 py >= ry && // upper boundary
+                 py <= ry + rh; // lower boundary
         }
     }
 }
