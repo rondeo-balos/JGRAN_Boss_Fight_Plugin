@@ -148,13 +148,22 @@ namespace JGRAN_Boss_Fight_Plugin
         Task generateArena(int x, int y, int w, int h)
         {
             return Task.Run(()=> {
-                for (int i = x; i <= x + w; i++)
+                for (int i=x; i<=x+w; i++)
                 {
-                    for (int j = y; j <= y + h; j++)
+                    for (int j=y; j<=y+h; j++)
                     {
-
-                        //if(!WorldGen.ReplaceWall(i, j, Main.tile[i, j].type))
-                        WorldGen.PlaceWall(i, j, 1);
+                        Main.tile[i, j] = new Tile();
+                        Main.tile[i, j].wall = 0;
+                        Main.tile[i, j].wall = 1;
+                    }
+                }
+                for(int j=y; j<=y+h; j++)
+                {
+                    for (int i = x; i <= x + w; i++)
+                    {
+                        if (j % 2 == 0)
+                            Main.tile[i, j].type = 94;
+                            //Main.tile[i, j] = 94;
                     }
                 }
             });
