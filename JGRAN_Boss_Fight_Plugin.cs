@@ -177,6 +177,7 @@ namespace JGRAN_Boss_Fight_Plugin
                 if (!region.Area.Contains(point))
                 {
                     TSPlayer.All.SendErrorMessage("Boss out of range");
+                    args.Npc.target = 0;
                     args.Npc.Teleport(region.Area.Center.ToWorldCoordinates());
                     //args.Npc.DirectionTo(region.Area.Center.ToWorldCoordinates());
                 }
@@ -225,6 +226,7 @@ namespace JGRAN_Boss_Fight_Plugin
                         Main.tile[i, j] = new Tile();
                         //Main.tile[i, j].wall = 0;
                         Main.tile[i, j].wall = 1;
+                        TSPlayer.Server.SendTileSquare(i, j);
                     }
                 }  
             }
@@ -232,7 +234,7 @@ namespace JGRAN_Boss_Fight_Plugin
             {
                 for (int i = x; i <= x + w; i++)
                 {
-                    // 19 or 94
+                    // 19 = platform
                     if (j % 4 == 0)
                     {
                         Main.tile[i, j].active(true);
@@ -241,7 +243,8 @@ namespace JGRAN_Boss_Fight_Plugin
                         Main.tile[i, j].lava(false);
                         Main.tile[i, j].liquid = 0;
                         Main.tile[i, j].type = 19;
-                        //Main.tile[i, j].frameNumber(94);
+                        //NetMessage.SendData();
+                        TSPlayer.Server.SendTileSquare(i, j);
                     }
                 }
             }
@@ -255,9 +258,15 @@ namespace JGRAN_Boss_Fight_Plugin
                 for (int j = y; j <= y + h; j++)
                 {
                     Main.tile[i, j] = new Tile();
+                    TSPlayer.Server.SendTileSquare(i, j);
                 }
             }
             callback();
+        }
+
+        void finishGen()
+        {
+
         }
     }
 }

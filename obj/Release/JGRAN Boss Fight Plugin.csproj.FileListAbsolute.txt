@@ -1,0 +1,25 @@
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\JGRAN Boss Fight Plugin.dll.config
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\JGRAN Boss Fight Plugin.dll
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\JGRAN Boss Fight Plugin.pdb
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\OTAPI.dll
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\TerrariaServer.exe
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\TShockAPI.dll
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\Newtonsoft.Json.dll
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\HttpServer.dll
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\MySql.Data.dll
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\BCrypt.Net.dll
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\Mono.Data.Sqlite.dll
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\OTAPI.pdb
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\TerrariaServer.pdb
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\TShockAPI.pdb
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\TShockAPI.xml
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\TShockAPI.dll.config
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\Newtonsoft.Json.xml
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\HttpServer.pdb
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\HttpServer.xml
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\bin\Release\BCrypt.Net.xml
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\obj\Release\JGRAN Boss Fight Plugin.csprojAssemblyReference.cache
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\obj\Release\JGRAN Boss Fight Plugin.csproj.CoreCompileInputs.cache
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\obj\Release\JGRAN Boss Fight Plugin.csproj.CopyComplete
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\obj\Release\JGRAN Boss Fight Plugin.dll
+E:\JGRAN Boss Fight Plugin\JGRAN Boss Fight Plugin\obj\Release\JGRAN Boss Fight Plugin.pdb
