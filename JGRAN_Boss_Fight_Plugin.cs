@@ -183,14 +183,40 @@ namespace JGRAN_Boss_Fight_Plugin
 
                 TShockAPI.DB.Region region = TShock.Regions.GetRegionByName(getArena());
 
-                if (!region.Area.Contains(point))
+                Polygon b1 = new Polygon();
+                Polygon b2 = new Polygon();
+
+                Polygon boundary = new Polygon(new float[] { region.Area.X, region.Area.Y, region.Area.X + region.Area.Width, region.Area.Y, region.Area.X + region.Area.Width, region.Area.Y + region.Area.Height, region.Area.X, region.Area.Y + region.Area.Height });
+                Polygon p = new Polygon(new float[] { point.X, point.Y, point.X + 1, point.Y, point.X + 1, point.Y + 1, point.X, point.Y + 1 });
+                Intersector.MinimumTranslationVector mtv = new Intersector.MinimumTranslationVector();
+                if (Intersector.OverlapConvexPolygons(boundary, p, mtv))
                 {
-                    TSPlayer.All.SendErrorMessage("Boss out of range");
-                    args.Npc.target = -1;
-                    args.Npc.TargetClosestUpgraded(true, region.Area.Center.ToWorldCoordinates());
-                    //args.Npc.Teleport(region.Area.Center.ToWorldCoordinates());
-                    //args.Npc.DirectionTo(region.Area.Center.ToWorldCoordinates());
+                    TSPlayer.All.SendErrorMessage($"Boss out of range (normal [{mtv.normal.X},{mtv.normal.Y}])");
+                    args.Npc.position.X += mtv.normal.X * (mtv.depth * 2);
+                    args.Npc.position.Y += mtv.normal.Y * (mtv.depth * 2);
+                    args.Npc.netUpdate = true;
+                    args.Npc.netUpdate2 = true;
                 }
+                /*if (!region.Area.Contains(Main.player[args.Npc.target].position.ToTileCoordinates()))
+                {
+                    args.Npc.velocity.X = 0;
+                    args.Npc.velocity.Y = 0;
+                    args.Npc.target = -1;
+                }
+
+                int inside = 0;
+
+                TShock.Players.ForEach((plr) =>
+                    {
+                        if (plr.IsLoggedIn && region.Area.Contains(plr.LastNetPosition.ToTileCoordinates()))
+                        {
+                            inside++;
+                        }
+                    }
+                );
+
+                if (inside <= 0)
+                    args.Npc.active = false;*/
             }
         }
         
